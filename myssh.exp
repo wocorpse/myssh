@@ -1,0 +1,48 @@
+#!/usr/bin/expect -f
+
+set hosts "172.16.11.10 172.16.11.11 172.16.11.12
+           172.16.11.13 172.16.11.14 172.16.11.15"
+set timeout 60
+set user "root"
+set passwd "123456"
+set prompt "(%|#|\\$)$"
+
+send_user "The hosts you can login:
+      0. 172.16.11.10
+      1. 172.16.11.11
+      2. 172.16.11.12
+      3. 172.16.11.13
+      4. 172.16.11.14
+      5. 172.16.11.15
+     \n"
+send_user  "Please select one of the above hosts you want to login: "
+
+expect_user -re "(\[0-9\]+)\n"
+#send_user "Selected host number: [lindex $hosts $expect_out(1,string)]\n"
+set host [lindex $hosts $expect_out(1,string)]
+
+spawn ssh $user@$host
+set timeout 60
+expect {
+    -re "Are you sure you want to continue connecting (yes/no)?" {
+        send "yes\r"
+    }
+    -re "password:" {
+        send "$passwd\r"
+    }
+    timeout exit
+}
+
+expect {
+    -re "\r\nPermission denied, please try again\.\r\r\n" {
+        exit
+    }
+    -re "password:" {
+        send "$passwd\r"
+    }
+    -re "$prompt" {
+        send "\r"
+    }
+}
+
+interact
